@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const apiKeyInput = document.getElementById('apiKey');
+  const toggleApiKeyBtn = document.getElementById('toggleApiKey');
   const storyInput = document.getElementById('storyText');
+  const charCountEl = document.getElementById('charCount');
   const styleSelect = document.getElementById('visualStyle');
   const delayInput = document.getElementById('delaySec');
   const btnGenerate = document.getElementById('btnGeneratePrompts');
@@ -13,14 +15,54 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let currentParsedData = null;
 
-  const saved = await chrome.storage.local.get(['gemini_api_key']);
-  if (saved.gemini_api_key) apiKeyInput.value = saved.gemini_api_key;
+  // Tải lại API key đã lưu nếu có trong storage
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      const saved = await chrome.storage.local.get(['gemini_api_key']);
+      if (saved.gemini_api_key) apiKeyInput.value = saved.gemini_api_key;
+    }
+  } catch (e) {
+    console.log('Running in standalone mode');
+  }
 
-  function showStatus(msg) {
+  // Toggle ẩn/hiện API Key
+  toggleApiKeyBtn.addEventListener('click', () => {
+    if (apiKeyInput.type === 'password') {
+      apiKeyInput.type = 'text';
+      toggleApiKeyBtn.style.color = '#38bdf8';
+    } else {
+      apiKeyInput.type = 'password';
+      toggleApiKeyBtn.style.color = '#64748b';
+    }
+  });
+
+  // Đếm từ theo thời gian thực
+  storyInput.addEventListener('input', () => {
+    const text = storyInput.value.trim();
+    const count = text ? text.split(/\s+/).length : 0;
+    charCountEl.textContent = `${count} từ`;
+  });
+
+  function showStatus(msg, type = 'info') {
     statusBox.textContent = msg;
+    statusBox.className = 'status-box';
+    if (type === 'error') {
+      statusBox.style.borderColor = '#f87171';
+      statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+      statusBox.style.color = '#fca5a5';
+    } else if (type === 'success') {
+      statusBox.style.borderColor = '#4ade80';
+      statusBox.style.background = 'rgba(34, 197, 94, 0.15)';
+      statusBox.style.color = '#86efac';
+    } else {
+      statusBox.style.borderColor = '#38bdf8';
+      statusBox.style.background = 'rgba(56, 189, 248, 0.15)';
+      statusBox.style.color = '#bae6fd';
+    }
     statusBox.classList.remove('hidden');
   }
 
+  // 1. Phân tách kịch bản thành Prompt bằng Gemini API
   btnGenerate.addEventListener('click', async () => {
     const apiKey = apiKeyInput.value.trim();
     const story = storyInput.value.trim();
@@ -29,8 +71,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!apiKey) return alert('Vui lòng nhập Gemini API Key!');
     if (!story) return alert('Vui lòng nhập nội dung câu chuyện/kịch bản!');
 
-    await chrome.storage.local.set({ gemini_api_key: apiKey });
-    showStatus('⏳ Đang phân tích kịch bản và khóa đặc điểm nhân vật...');
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      await chrome.storage.local.set({ gemini_api_key: apiKey });
+    }
+
+    showStatus('⏳ Đang phân tích kịch bản và trích xuất đặc điểm nhân vật...', 'info');
     btnGenerate.disabled = true;
 
     try {
@@ -70,6 +115,7 @@ YÊU CẦU BẮT BUỘC:
       const contentText = data.candidates[0].content.parts[0].text;
       currentParsedData = JSON.parse(contentText);
 
+      // Hiển thị giao diện danh sách phân cảnh
       characterDnaBox.innerHTML = `<strong>👤 Nhân vật đồng nhất:</strong> ${currentParsedData.character_dna}`;
       sceneCount.textContent = currentParsedData.scenes.length;
       sceneList.innerHTML = '';
@@ -78,33 +124,45 @@ YÊU CẦU BẮT BUỘC:
         const item = document.createElement('div');
         item.className = 'scene-item';
         item.innerHTML = `
-          <strong>Cảnh ${sc.scene_index}: ${sc.story_beat}</strong>
-          <p><strong>🖼️ Image:</strong> ${sc.image_prompt}</p>
-          <p><strong>🎥 Motion:</strong> ${sc.motion_prompt}</p>
+          <div class="scene-item-title">
+            <span>Cảnh ${sc.scene_index}: ${sc.story_beat}</span>
+            <span class="tag">Shot ${sc.scene_index}</span>
+          </div>
+          <div class="scene-field image-field">
+            <strong>🖼️ Ảnh:</strong> ${sc.image_prompt}
+          </div>
+          <div class="scene-field motion-field">
+            <strong>🎥 Video:</strong> ${sc.motion_prompt}
+          </div>
         `;
         sceneList.appendChild(item);
       });
 
       sceneContainer.classList.remove('hidden');
-      showStatus(`✅ Đã phân tách thành công ${currentParsedData.scenes.length} cảnh! Bạn có thể bắt đầu chạy.`);
+      showStatus(`✅ Đã phân tách thành công ${currentParsedData.scenes.length} cảnh! Bạn có thể bắt đầu chạy.`, 'success');
 
     } catch (err) {
-      showStatus(`❌ Lỗi: ${err.message}`);
+      showStatus(`❌ Lỗi: ${err.message}`, 'error');
     } finally {
       btnGenerate.disabled = false;
     }
   });
 
+  // 2. Gửi danh sách phân cảnh sang tab Google Flow để chạy tự động
   btnRun.addEventListener('click', async () => {
     if (!currentParsedData || !currentParsedData.scenes.length) return;
 
+    if (typeof chrome === 'undefined' || !chrome.tabs) {
+      return alert('Chức năng này cần được chạy bên trong tiện ích mở rộng Chrome!');
+    }
+
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || !tab.url.includes('flow.google.com')) {
+    if (!tab || !tab.url || !tab.url.includes('flow.google.com')) {
       return alert('Vui lòng mở trang web Google Flow (flow.google.com) trên tab hiện tại trước khi bấm chạy!');
     }
 
     const delay = parseInt(delayInput.value) || 8;
-    showStatus('🚀 Đang gửi dữ liệu sang Google Flow để thực thi...');
+    showStatus('🚀 Đang gửi dữ liệu sang Google Flow để thực thi...', 'info');
 
     chrome.tabs.sendMessage(tab.id, {
       action: 'START_BATCH',
@@ -112,9 +170,9 @@ YÊU CẦU BẮT BUỘC:
       delaySeconds: delay
     }, (response) => {
       if (chrome.runtime.lastError) {
-        showStatus('❌ Chưa kết nối được với tab Google Flow. Hãy tải lại (F5) trang flow.google.com rồi thử lại!');
+        showStatus('❌ Chưa kết nối được với tab Google Flow. Hãy tải lại (F5) trang flow.google.com rồi thử lại!', 'error');
       } else {
-        showStatus('⚡ Đang tự động bơm prompt vào Google Flow...');
+        showStatus('⚡ Đang tự động bơm prompt vào Google Flow...', 'success');
       }
     });
   });

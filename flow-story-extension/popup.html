@@ -2,50 +2,123 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowStory AI - Creative Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="popup.css">
-  <title>FlowStory AI</title>
 </head>
 <body>
-  <div class="header">
-    <h2>🎬 FlowStory AI</h2>
-    <span class="badge">Google Flow Automation</span>
-  </div>
+  <div class="app-card">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </div>
+        <div>
+          <h1 class="title">FlowStory <span class="gradient-text">Studio</span></h1>
+          <p class="subtitle">AI Batch Generator for Google Flow</p>
+        </div>
+      </div>
+      <span class="live-pill">
+        <span class="dot"></span> Flow 3.1
+      </span>
+    </header>
 
-  <div class="section">
-    <label for="apiKey">Gemini API Key:</label>
-    <input type="password" id="apiKey" placeholder="Dán Gemini API Key vào đây..." />
-  </div>
+    <!-- Form Section -->
+    <div class="form-body">
+      <!-- API Key Field -->
+      <div class="input-group">
+        <div class="label-row">
+          <label for="apiKey">Gemini API Key</label>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="hint-link">Lấy Key miễn phí ↗</a>
+        </div>
+        <div class="input-wrapper">
+          <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <input type="password" id="apiKey" placeholder="Dán khóa API (AIzaSy...)" autocomplete="off" />
+          <button type="button" id="toggleApiKey" class="icon-btn" title="Hiện/Ẩn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
 
-  <div class="section">
-    <label for="storyText">Kịch bản / Câu chuyện dài:</label>
-    <textarea id="storyText" rows="5" placeholder="Dán toàn bộ kịch bản hoặc câu chuyện vào đây..."></textarea>
-  </div>
+      <!-- Story Field -->
+      <div class="input-group">
+        <div class="label-row">
+          <label for="storyText">Kịch bản / Đoạn văn câu chuyện</label>
+          <span class="char-count" id="charCount">0 từ</span>
+        </div>
+        <textarea id="storyText" rows="4" placeholder="Dán nội dung truyện của bạn vào đây. AI sẽ tự động phân tích và tạo chuỗi hình ảnh liên tục giữ đúng nhân vật..."></textarea>
+      </div>
 
-  <div class="section row">
-    <div>
-      <label for="visualStyle">Phong cách thị giác:</label>
-      <select id="visualStyle">
-        <option value="Cinematic, 35mm lens, photorealistic, warm film tones">Cinematic Điện Ảnh</option>
-        <option value="Anime style, Makoto Shinkai lighting, vibrant 4k">Anime Nhật Bản</option>
-        <option value="Cyberpunk, neon lighting, dark atmospheric, hyper-detailed">Cyberpunk</option>
-        <option value="Vintage 1990s retro photography, soft flash">Retro 90s</option>
-      </select>
+      <!-- Settings Row -->
+      <div class="grid-2">
+        <div class="input-group">
+          <label for="visualStyle">Phong cách hình ảnh</label>
+          <div class="select-wrapper">
+            <select id="visualStyle">
+              <option value="Cinematic film, 35mm lens, photorealistic, warm film tones, 8k">🎬 Điện Ảnh (Cinematic)</option>
+              <option value="Anime style, Makoto Shinkai aesthetic, vivid studio lighting, 4k">🌸 Anime Nghệ Thuật</option>
+              <option value="Cyberpunk, futuristic neon lighting, moody volumetric haze">⚡ Cyberpunk Viễn Tưởng</option>
+              <option value="Vintage 90s Polaroid photography, soft grain, natural light">📷 Retro Vintage 90s</option>
+              <option value="Dark fantasy, dramatic chiaroscuro lighting, oil painting texture">🎨 Dark Fantasy Hùng Vĩ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="delaySec">Độ trễ mỗi cảnh</label>
+          <div class="input-wrapper">
+            <input type="number" id="delaySec" value="8" min="3" max="60" />
+            <span class="unit">giây</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button 1 -->
+      <button id="btnGeneratePrompts" class="btn btn-primary">
+        <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+          <path d="M5 3v4"/>
+          <path d="M19 17v4"/>
+          <path d="M3 5h4"/>
+          <path d="M17 19h4"/>
+        </svg>
+        <span>1. Phân Tích & Viết Prompt Điện Ảnh</span>
+      </button>
+
+      <!-- Status Toast -->
+      <div id="status" class="status-box hidden"></div>
+
+      <!-- Preview Container -->
+      <div id="sceneContainer" class="scene-container hidden">
+        <div class="scene-header">
+          <h3>Phân Cảnh Sẵn Sàng (<span id="sceneCount">0</span>)</h3>
+          <span class="badge-success">Đã khóa nhân vật</span>
+        </div>
+
+        <div id="characterDnaBox" class="character-card"></div>
+
+        <div id="sceneList" class="scene-scroll"></div>
+
+        <button id="btnRunBatch" class="btn btn-success">
+          <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span>2. Bắt Đầu Tự Động Chạy Trên Google Flow</span>
+        </button>
+      </div>
     </div>
-    <div>
-      <label for="delaySec">Độ trễ mỗi cảnh (giây):</label>
-      <input type="number" id="delaySec" value="8" min="3" max="60" />
-    </div>
-  </div>
-
-  <button id="btnGeneratePrompts" class="btn primary">✨ 1. Phân Tích & Viết Prompt Tự Động</button>
-  
-  <div id="status" class="status-box hidden"></div>
-
-  <div id="sceneContainer" class="hidden">
-    <h3>Danh sách phân cảnh (<span id="sceneCount">0</span>)</h3>
-    <div id="characterDnaBox" class="dna-box"></div>
-    <div id="sceneList" class="scene-list"></div>
-    <button id="btnRunBatch" class="btn success">🚀 2. Bắt Đầu Chạy Hàng Loạt Trên Flow</button>
   </div>
 
   <script src="popup.js"></script>
