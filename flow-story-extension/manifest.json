@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "FlowStory AI - Batch Generator for Google Flow",
+  "version": "1.0.0",
+  "description": "Tự động phân tách kịch bản và tạo ảnh/video hàng loạt trên Google Flow giữ nhất quán nhân vật.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://flow.google.com/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FlowStory AI"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://flow.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

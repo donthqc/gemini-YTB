@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+  <title>FlowStory AI</title>
+</head>
+<body>
+  <div class="header">
+    <h2>🎬 FlowStory AI</h2>
+    <span class="badge">Google Flow Automation</span>
+  </div>
+
+  <div class="section">
+    <label for="apiKey">Gemini API Key:</label>
+    <input type="password" id="apiKey" placeholder="Dán Gemini API Key vào đây..." />
+  </div>
+
+  <div class="section">
+    <label for="storyText">Kịch bản / Câu chuyện dài:</label>
+    <textarea id="storyText" rows="5" placeholder="Dán toàn bộ kịch bản hoặc câu chuyện vào đây..."></textarea>
+  </div>
+
+  <div class="section row">
+    <div>
+      <label for="visualStyle">Phong cách thị giác:</label>
+      <select id="visualStyle">
+        <option value="Cinematic, 35mm lens, photorealistic, warm film tones">Cinematic Điện Ảnh</option>
+        <option value="Anime style, Makoto Shinkai lighting, vibrant 4k">Anime Nhật Bản</option>
+        <option value="Cyberpunk, neon lighting, dark atmospheric, hyper-detailed">Cyberpunk</option>
+        <option value="Vintage 1990s retro photography, soft flash">Retro 90s</option>
+      </select>
+    </div>
+    <div>
+      <label for="delaySec">Độ trễ mỗi cảnh (giây):</label>
+      <input type="number" id="delaySec" value="8" min="3" max="60" />
+    </div>
+  </div>
+
+  <button id="btnGeneratePrompts" class="btn primary">✨ 1. Phân Tích & Viết Prompt Tự Động</button>
+  
+  <div id="status" class="status-box hidden"></div>
+
+  <div id="sceneContainer" class="hidden">
+    <h3>Danh sách phân cảnh (<span id="sceneCount">0</span>)</h3>
+    <div id="characterDnaBox" class="dna-box"></div>
+    <div id="sceneList" class="scene-list"></div>
+    <button id="btnRunBatch" class="btn success">🚀 2. Bắt Đầu Chạy Hàng Loạt Trên Flow</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
